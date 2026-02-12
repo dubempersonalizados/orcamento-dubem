@@ -83,7 +83,6 @@
         .col-unit-desc { width: 10%; }
         .col-total { width: 10%; }
 
-        /* Realce do campo item */
         .input-item { border: 1px solid #ddd !important; background-color: #fafafa !important; }
         .input-item:focus { border-color: var(--laranja) !important; outline: none; }
 
@@ -122,7 +121,7 @@
     <div class="grid-header">
         <div class="form-group">
             <label>Cliente:</label>
-            <input type="text" id="cliente">
+            <input type="text" id="cliente" placeholder="Nome do Cliente">
         </div>
         <div class="form-group">
             <label>Contato:</label>
@@ -243,9 +242,15 @@
 
     function generatePDF() {
         const element = document.getElementById('orcamento-container');
+        
+        // Pega o nome do cliente e remove espaços extras
+        const nomeCliente = document.getElementById('cliente').value.trim();
+        // Se o nome estiver vazio, usa "Orcamento_DUBEM", se não, usa o nome do cliente
+        const nomeArquivo = nomeCliente ? `Orcamento_${nomeCliente}.pdf` : 'Orcamento_DUBEM.pdf';
+
         const opt = {
             margin: [10, 5, 10, 5],
-            filename: 'orcamento_dubem.pdf',
+            filename: nomeArquivo,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { 
                 scale: 2, 
