@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orçamento - DUBEM</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --azul: #001f3f;
+            --laranja: #ff851b;
+            --branco: #ffffff;
+            --cinza-claro: #f4f4f4;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: var(--cinza-claro);
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Ajuste crucial para o PDF: Container com tamanho fixo A4 */
+        #orcamento-container {
+            width: 210mm;
+            height: 297mm; /* Força a altura de uma folha A4 */
+            margin: 0 auto;
+            background: var(--branco);
+            padding: 10mm;
+            box-sizing: border-box;
+            border-top: 8px solid var(--azul);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--laranja);
+            padding-bottom: 8px;
+            margin-bottom: 5px;
+        }
+
+        .titulo-formulario {
+            text-align: center;
+            color: var(--azul);
+            text-transform: uppercase;
+            font-weight: bold;
+            font-size: 18px;
+            margin: 10px 0 15px 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .logo-area h1 { color: var(--azul); margin: 0; font-size: 20px; }
+        .insta-info { color: #E1306C; font-weight: bold; font-size: 13px; }
+
+        .grid-header {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .form-group { display: flex; flex-direction: column; font-size: 11px; }
+        label { font-weight: bold; color: var(--azul); margin-bottom: 2px; }
+        input, select, textarea { padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            table-layout: fixed;
+        }
+
+        th {
+            background-color: var(--azul);
+            color: white;
+            padding: 4px 6px;
+            text-align: left;
+        }
+
+        td { padding: 4px; border-bottom: 1px solid #ddd; overflow: hidden; }
+
+        /* Colunas recalibradas conforme solicitado anteriormente */
+        .col-item { width: 40%; }
+        .col-tecido { width: 15%; }
+        .col-qtd { width: 7%; }
+        .col-unit { width: 11%; }
+        .col-desc { width: 7%; }
+        .col-unit-desc { width: 10%; }
+        .col-total { width: 10%; }
+
+        .observacoes-container { margin-top: 15px; display: flex; flex-direction: column; }
+        .observacoes-container textarea { width: 100%; height: 50px; resize: none; padding: 5px; }
+
+        .totais-area { display: flex; justify-content: flex-end; margin-top: 10px; flex-grow: 1; }
+        .totais-container { width: 240px; background: #f9f9f9; padding: 8px; border: 1px solid #ddd; border-radius: 5px; height: fit-content; }
+        .total-row { display: flex; justify-content: space-between; margin: 2px 0; font-weight: bold; font-size: 12px; }
+
+        /* Rodapé fixado na base da folha A4 */
+        footer { 
+            text-align: center; 
+            font-size: 9px; 
+            color: #555; 
+            border-top: 1px solid #ddd; 
+            padding-top: 8px; 
+            position: absolute;
+            bottom: 10mm;
+            left: 10mm;
+            right: 10mm;
+        }
+
+        .no-print { margin: 20px 0; display: flex; gap: 10px; justify-content: center; }
+        .table-input { width: 100%; box-sizing: border-box; border: none; background: transparent; padding: 2px; }
+    </style>
+</head>
+<body>
+
+<div id="orcamento-container">
+    <header>
+        <div class="logo-area">
+            <h1>DUBEM Produtos e Serviços LTDA</h1>
+            <div class="insta-info"><i class="fab fa-instagram"></i> loja_dubem</div>
+        </div>
+        <div class="form-group">
+            <label>Data e Hora:</label>
+            <input type="datetime-local" id="data-hora">
+        </div>
+    </header>
+
+    <div class="titulo-formulario">Orçamento de Vendas</div>
+
+    <div class="grid-header">
+        <div class="form-group">
+            <label>Cliente:</label>
+            <input type="text" id="cliente">
+        </div>
+        <div class="form-group">
+            <label>Contato:</label>
+            <input type="text" id="contato">
+        </div>
+        <div class="form-group">
+            <label>Atendente:</label>
+            <input type="text" id="atendente">
+        </div>
+    </div>
+
+    <button class="btn btn-add no-print" onclick="addRow()">+ Inserir Linha</button>
+
+    <table id="itens-table">
+        <thead>
+            <tr>
+                <th class="col-item">Item</th>
+                <th class="col-tecido">Tecido</th>
+                <th class="col-qtd">Qtd</th>
+                <th class="col-unit">Val. Unit</th>
+                <th class="col-desc">Desc%</th>
+                <th class="col-unit-desc">c/ Desc</th>
+                <th class="col-total">Total</th>
+                <th class="no-print" style="width: 30px;"></th>
+            </tr>
+        </thead>
+        <tbody id="itens-body"></tbody>
+    </table>
+
+    <div class="observacoes-container">
+        <label>Observações:</label>
+        <textarea id="observacoes" placeholder="Digite aqui observações adicionais..."></textarea>
+    </div>
+
+    <div class="totais-area">
+        <div class="totais-container">
+            <div class="total-row"><span>Subtotal:</span> <span id="res-subtotal">R$ 0,00</span></div>
+            <div class="total-row"><span>Desc. Total:</span> <span id="res-desconto">R$ 0,00</span></div>
+            <div class="total-row" style="color: var(--azul);"><span>Total Líquido:</span> <span id="res-total">R$ 0,00</span></div>
+            <div class="form-group" style="margin: 5px 0; border-top: 1px dashed #ccc; padding-top: 5px;">
+                <label>Valor de Entrada:</label>
+                <input type="text" id="valor-entrada" value="R$ 0,00" oninput="formatarMoedaInput(this); calculateTotals()">
+            </div>
+            <div class="total-row" style="color: var(--laranja); font-size: 14px;">
+                <span>VALOR À PAGAR:</span> <span id="res-a-pagar">R$ 0,00</span>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <strong>DUBEM PRODUTOS PERSONALIZADOS - CNPJ: 189.178.840/0001-89</strong><br>
+        RUA DOM AURELIANO MATOS 1897, CENTRO - ITAPAJÉ (CE)<br>
+        (85) 9.9280-4012 / dubemprodutoseservicos@gmail.com
+    </footer>
+</div>
+
+<div class="no-print">
+    <button class="btn btn-print" onclick="generatePDF()"><i class="fas fa-file-pdf"></i> Salvar PDF</button>
+    <button class="btn btn-whatsapp" onclick="sendWhatsApp()"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>
+</div>
+
+<script>
+    const tecidos = ["Algodão", "Cacharrel Kanxa", "Cotton", "Dry Elastano", "Dry Falcom", "Dry Kanxa", "Dry Sport", "Helanca Colegial", "Helanquinha Lite", "Moletom", "Piquê", "PP Caiman", "PP Aquarela", "PP Cor", "PP Elastano", "Tactel Cor", "Tactel Branco", "Outros"];
+
+    function formatarMoedaInput(input) {
+        let valor = input.value.replace(/\D/g, "");
+        valor = (valor / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        input.value = valor;
+    }
+
+    function converterParaNumero(stringMoeda) {
+        if (!stringMoeda) return 0;
+        return parseFloat(stringMoeda.replace("R$", "").replace(/\./g, "").replace(",", ".")) || 0;
+    }
+
+    function addRow() {
+        const tbody = document.getElementById('itens-body');
+        const row = tbody.insertRow();
+        let options = tecidos.map(t => `<option value="${t}">${t}</option>`).join('');
+
+        row.innerHTML = `
+            <td><input type="text" class="table-input"></td>
+            <td><select class="table-input">${options}</select></td>
+            <td><input type="number" class="table-input qtd" value="1" oninput="calculateRow(this)"></td>
+            <td><input type="text" class="table-input val-un" value="R$ 0,00" oninput="formatarMoedaInput(this); calculateRow(this)"></td>
+            <td><input type="number" class="table-input desc" value="0" oninput="calculateRow(this)"></td>
+            <td class="un-desc">R$ 0,00</td>
+            <td class="row-total">R$ 0,00</td>
+            <td class="no-print"><button class="btn-remove" onclick="this.parentElement.parentElement.remove(); calculateTotals();">X</button></td>
+        `;
+    }
+
+    function calculateRow(input) {
+        const row = input.parentElement.parentElement;
+        const qtd = parseFloat(row.querySelector('.qtd').value) || 0;
+        const valUn = converterParaNumero(row.querySelector('.val-un').value);
+        const descPorcent = parseFloat(row.querySelector('.desc').value) || 0;
+        const valDescUnitario = valUn * (descPorcent / 100);
+        const unitComDesc = valUn - valDescUnitario;
+        const totalLinha = unitComDesc * qtd;
+
+        row.querySelector('.un-desc').innerText = unitComDesc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        row.querySelector('.row-total').innerText = totalLinha.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        
+        row.dataset.total = totalLinha; 
+        row.dataset.descTotal = valDescUnitario * qtd;
+        row.dataset.subBruto = valUn * qtd;
+        calculateTotals();
+    }
+
+    function calculateTotals() {
+        let sub = 0, desc = 0;
+        document.querySelectorAll('#itens-body tr').forEach(r => {
+            sub += parseFloat(r.dataset.subBruto) || 0;
+            desc += parseFloat(r.dataset.descTotal) || 0;
+        });
+        const totalLíquido = sub - desc;
+        const entrada = converterParaNumero(document.getElementById('valor-entrada').value);
+
+        document.getElementById('res-subtotal').innerText = sub.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById('res-desconto').innerText = desc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById('res-total').innerText = totalLíquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        document.getElementById('res-a-pagar').innerText = (totalLíquido - entrada).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function generatePDF() {
+        const element = document.getElementById('orcamento-container');
+        
+        // Configurações para garantir o enquadramento perfeito em 1 folha A4
+        const opt = {
+            margin: 0,
+            filename: 'orcamento_dubem.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { 
+                scale: 2, 
+                useCORS: true,
+                letterRendering: true,
+                scrollY: 0,
+                scrollX: 0
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: 'avoid' } // Evita quebra de página
+        };
+
+        html2pdf().from(element).set(opt).save();
+    }
+
+    function sendWhatsApp() {
+        const cliente = document.getElementById('cliente').value || "Cliente";
+        const total = document.getElementById('res-total').innerText;
+        window.open(`https://api.whatsapp.com/send?phone=5585992804012&text=Orçamento DUBEM: ${cliente} - Total: ${total}`, '_blank');
+    }
+
+    window.onload = () => {
+        addRow();
+        const agora = new Date();
+        agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
+        document.getElementById('data-hora').value = agora.toISOString().slice(0, 16);
+    };
+</script>
+</body>
+</html>
