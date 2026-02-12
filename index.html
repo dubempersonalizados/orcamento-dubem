@@ -13,6 +13,7 @@
             --laranja: #ff851b;
             --branco: #ffffff;
             --cinza-claro: #f4f4f4;
+            --vermelho: #ff4136;
         }
 
         body {
@@ -99,6 +100,23 @@
         }
 
         .no-print { margin: 20px 0; display: flex; gap: 10px; justify-content: center; }
+        
+        .btn {
+            padding: 12px 25px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: white;
+        }
+
+        .btn-add { background: var(--laranja); padding: 8px 15px; }
+        .btn-pdf { background: var(--azul); }
+        .btn-clear { background: #7f8c8d; }
+
         .table-input { width: 100%; box-sizing: border-box; border: none; background: transparent; padding: 2px; }
     </style>
 </head>
@@ -133,7 +151,7 @@
         </div>
     </div>
 
-    <button class="no-print" onclick="addRow()" style="background:var(--laranja); color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold; margin-bottom:10px;">+ Inserir Linha</button>
+    <button class="no-print btn btn-add" onclick="addRow()">+ Inserir Linha</button>
 
     <table id="itens-table">
         <thead>
@@ -179,7 +197,8 @@
 </div>
 
 <div class="no-print">
-    <button onclick="generatePDF()" style="padding:12px 25px; background:var(--azul); color:white; border-radius:5px; font-weight:bold; cursor:pointer;">SALVAR PDF COMPLETO</button>
+    <button class="btn btn-pdf" onclick="generatePDF()"><i class="fas fa-file-pdf"></i> SALVAR PDF COMPLETO</button>
+    <button class="btn btn-clear" onclick="novoOrcamento()"><i class="fas fa-sync-alt"></i> NOVO ORÇAMENTO</button>
 </div>
 
 <script>
@@ -242,26 +261,44 @@
 
     function generatePDF() {
         const element = document.getElementById('orcamento-container');
-        
-        // Pega o nome do cliente e remove espaços extras
         const nomeCliente = document.getElementById('cliente').value.trim();
-        // Se o nome estiver vazio, usa "Orcamento_DUBEM", se não, usa o nome do cliente
         const nomeArquivo = nomeCliente ? `Orcamento_${nomeCliente}.pdf` : 'Orcamento_DUBEM.pdf';
 
         const opt = {
             margin: [10, 5, 10, 5],
             filename: nomeArquivo,
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { 
-                scale: 2, 
-                useCORS: true, 
-                scrollY: 0,
-                windowHeight: element.scrollHeight 
-            },
+            html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowHeight: element.scrollHeight },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
             pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
         html2pdf().set(opt).from(element).save();
+    }
+
+    // FUNÇÃO PARA LIMPAR TUDO
+    function novoOrcamento() {
+        if(confirm("Deseja realmente limpar tudo e começar um novo orçamento?")) {
+            // Limpa campos de texto
+            document.getElementById('cliente').value = "";
+            document.getElementById('contato').value = "";
+            document.getElementById('atendente').value = "";
+            document.getElementById('observacoes').value = "";
+            document.getElementById('valor-entrada').value = "R$ 0,00";
+            
+            // Reseta a tabela
+            document.getElementById('itens-body').innerHTML = "";
+            addRow(); // Adiciona uma linha limpa
+            
+            // Recalcula totais (vai zerar tudo)
+            calculateTotals();
+            
+            // Atualiza a data para o momento atual
+            const agora = new Date();
+            agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
+            document.getElementById('data-hora').value = agora.toISOString().slice(0, 16);
+            
+            window.scrollTo(0, 0);
+        }
     }
 
     window.onload = () => {
