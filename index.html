@@ -22,17 +22,17 @@
             padding: 0;
         }
 
+        /* Removido altura fixa para permitir expansão */
         #orcamento-container {
             width: 210mm;
-            height: 297mm;
+            min-height: 297mm;
             margin: 0 auto;
             background: var(--branco);
-            padding: 10mm;
+            padding: 15mm 10mm;
             box-sizing: border-box;
             border-top: 8px solid var(--azul);
             display: flex;
             flex-direction: column;
-            position: relative;
         }
 
         header {
@@ -79,56 +79,61 @@
         th {
             background-color: var(--azul);
             color: white;
-            padding: 2px 6px;
+            padding: 6px;
             text-align: left;
         }
 
-        td { padding: 4px; border-bottom: 1px solid #ddd; overflow: hidden; }
+        td { padding: 6px; border-bottom: 1px solid #ddd; word-wrap: break-word; }
 
-        .col-item { width: 40%; }
-        .col-tecido { width: 15%; }
+        .col-item { width: 38%; }
+        .col-tecido { width: 17%; }
         .col-qtd { width: 7%; }
         .col-unit { width: 11%; }
         .col-desc { width: 7%; }
         .col-unit-desc { width: 10%; }
         .col-total { width: 10%; }
 
-        /* REALCE APENAS PARA O CAMPO ITEM */
+        /* Realce do campo item */
         .input-item {
-            border: 1.5px solid #bdc3c7 !important;
-            background-color: #fdfdfd !important;
-            border-radius: 4px;
-            transition: all 0.3s;
+            border: 1px solid #ddd !important;
+            background-color: #fafafa !important;
+            padding-left: 5px !important;
         }
-
         .input-item:focus {
             border-color: var(--laranja) !important;
             background-color: #fff !important;
-            box-shadow: 0 0 5px rgba(255, 133, 27, 0.3);
             outline: none;
         }
 
-        .observacoes-container { margin-top: 15px; display: flex; flex-direction: column; }
-        .observacoes-container textarea { width: 100%; height: 50px; resize: none; padding: 5px; }
+        .observacoes-container { margin-top: 15px; }
+        .observacoes-container textarea { width: 100%; height: 60px; resize: none; padding: 5px; }
 
-        .totais-area { display: flex; justify-content: flex-end; margin-top: 10px; flex-grow: 1; }
-        .totais-container { width: 240px; background: #f9f9f9; padding: 8px; border: 1px solid #ddd; border-radius: 5px; height: fit-content; }
-        .total-row { display: flex; justify-content: space-between; margin: 2px 0; font-weight: bold; font-size: 12px; }
+        .totais-area { 
+            display: flex; 
+            justify-content: flex-end; 
+            margin-top: 20px; 
+            page-break-inside: avoid; /* Evita que o quadro de total quebre no meio */
+        }
+        
+        .totais-container { width: 240px; background: #f9f9f9; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        .total-row { display: flex; justify-content: space-between; margin: 3px 0; font-weight: bold; font-size: 12px; }
 
+        /* Footer agora segue o fluxo do texto e evita quebra */
         footer { 
             text-align: center; 
             font-size: 9px; 
             color: #555; 
             border-top: 1px solid #ddd; 
-            padding-top: 8px; 
-            position: absolute;
-            bottom: 10mm;
-            left: 10mm;
-            right: 10mm;
+            padding-top: 10px; 
+            margin-top: 30px;
+            page-break-inside: avoid;
         }
 
         .no-print { margin: 20px 0; display: flex; gap: 10px; justify-content: center; }
         .table-input { width: 100%; box-sizing: border-box; border: none; background: transparent; padding: 2px; }
+
+        /* Estilo para quebra de página automática no PDF */
+        .html2pdf__page-break { height: 0; page-break-before: always; }
     </style>
 </head>
 <body>
@@ -162,7 +167,7 @@
         </div>
     </div>
 
-    <button class="btn btn-add no-print" onclick="addRow()">+ Inserir Linha</button>
+    <button class="btn btn-add no-print" onclick="addRow()" style="padding: 8px 15px; background: var(--laranja); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">+ Inserir Linha</button>
 
     <table id="itens-table">
         <thead>
@@ -181,7 +186,7 @@
     </table>
 
     <div class="observacoes-container">
-        <label>Observações:</label>
+        <label style="font-size: 11px; font-weight: bold; color: var(--azul);">Observações:</label>
         <textarea id="observacoes" placeholder="Digite aqui observações adicionais..."></textarea>
     </div>
 
@@ -208,8 +213,8 @@
 </div>
 
 <div class="no-print">
-    <button class="btn btn-print" onclick="generatePDF()"><i class="fas fa-file-pdf"></i> Salvar PDF</button>
-    <button class="btn btn-whatsapp" onclick="sendWhatsApp()"><i class="fab fa-whatsapp"></i> Enviar WhatsApp</button>
+    <button onclick="generatePDF()" style="padding: 10px 20px; background: var(--azul); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><i class="fas fa-file-pdf"></i> Salvar PDF</button>
+    <button onclick="sendWhatsApp()" style="padding: 10px 20px; background: #25D366; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;"><i class="fab fa-whatsapp"></i> WhatsApp</button>
 </div>
 
 <script>
@@ -232,14 +237,14 @@
         let options = tecidos.map(t => `<option value="${t}">${t}</option>`).join('');
 
         row.innerHTML = `
-            <td><input type="text" class="table-input input-item" placeholder="Clique para digitar o item..."></td>
+            <td><input type="text" class="table-input input-item" placeholder="Digite o item..."></td>
             <td><select class="table-input">${options}</select></td>
             <td><input type="number" class="table-input qtd" value="1" oninput="calculateRow(this)"></td>
             <td><input type="text" class="table-input val-un" value="R$ 0,00" oninput="formatarMoedaInput(this); calculateRow(this)"></td>
             <td><input type="number" class="table-input desc" value="0" oninput="calculateRow(this)"></td>
             <td class="un-desc">R$ 0,00</td>
             <td class="row-total">R$ 0,00</td>
-            <td class="no-print"><button class="btn-remove" onclick="this.parentElement.parentElement.remove(); calculateTotals();">X</button></td>
+            <td class="no-print"><button onclick="this.parentElement.parentElement.remove(); calculateTotals();" style="background:red; color:white; border:none; padding:2px 5px; cursor:pointer;">X</button></td>
         `;
     }
 
@@ -248,16 +253,15 @@
         const qtd = parseFloat(row.querySelector('.qtd').value) || 0;
         const valUn = converterParaNumero(row.querySelector('.val-un').value);
         const descPorcent = parseFloat(row.querySelector('.desc').value) || 0;
-        const valDescUnitario = valUn * (descPorcent / 100);
-        const unitComDesc = valUn - valDescUnitario;
+        const unitComDesc = valUn - (valUn * (descPorcent / 100));
         const totalLinha = unitComDesc * qtd;
 
         row.querySelector('.un-desc').innerText = unitComDesc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         row.querySelector('.row-total').innerText = totalLinha.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         
         row.dataset.total = totalLinha; 
-        row.dataset.descTotal = valDescUnitario * qtd;
         row.dataset.subBruto = valUn * qtd;
+        row.dataset.descTotal = (valUn * (descPorcent / 100)) * qtd;
         calculateTotals();
     }
 
@@ -279,13 +283,14 @@
     function generatePDF() {
         const element = document.getElementById('orcamento-container');
         const opt = {
-            margin: 0,
+            margin: [10, 0, 10, 0], // Margens superior e inferior para não cortar texto entre páginas
             filename: 'orcamento_dubem.pdf',
             image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
+            html2canvas: { scale: 2, useCORS: true },
             jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: 'avoid' }
+            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } // O segredo para quebras inteligentes
         };
+
         html2pdf().from(element).set(opt).save();
     }
 
@@ -304,4 +309,3 @@
 </script>
 </body>
 </html>
-
