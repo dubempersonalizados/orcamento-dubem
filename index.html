@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Orçamento - DUBEM</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    
+    <title>Orcamento - DUBEM</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; font-src https://cdnjs.cloudflare.com; img-src 'self' data:; connect-src https://script.google.com https://*.googleusercontent.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" crossorigin="anonymous">
     <style>
         :root {
             --azul: #001f3f;
@@ -14,570 +15,1130 @@
             --branco: #ffffff;
             --cinza-claro: #f4f4f4;
             --vermelho: #ff4136;
+            --bg-body: #f4f4f4;
+            --bg-card: #ffffff;
+            --bg-input: #f8faff;
+            --bg-stripe: #f5f8ff;
+            --bg-stripe2: #e8eef8;
+            --bg-calc: #f0f4fb;
+            --bg-totais: #f9f9f9;
+            --border: #d0d7e3;
+            --border-light: #ddd;
+            --text: #333;
+            --text-muted: #888;
+            --text-heading: #001f3f;
         }
-
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: var(--cinza-claro);
-            margin: 0;
-            padding: 0;
+        html.dark {
+            --bg-body: #1a1a2e;
+            --bg-card: #16213e;
+            --bg-input: #1a2744;
+            --bg-stripe: #1b2a4a;
+            --bg-stripe2: #1b2a4a;
+            --bg-calc: #1b2a4a;
+            --bg-totais: #16213e;
+            --border: #2a3a5c;
+            --border-light: #2a3a5c;
+            --text: #e0e0e0;
+            --text-muted: #8899aa;
+            --text-heading: #5dade2;
         }
-
-        #orcamento-container {
-            width: 210mm;
-            margin: 0 auto;
-            background: var(--branco);
-            padding: 15mm 10mm;
-            box-sizing: border-box;
-            border-top: 8px solid var(--azul);
-            display: block;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 2px solid var(--laranja);
-            padding-bottom: 8px;
-            margin-bottom: 10px;
-        }
-
-        .titulo-formulario {
-            text-align: center;
-            color: var(--azul);
-            text-transform: uppercase;
-            font-weight: bold;
-            font-size: 18px;
-            margin: 10px 0;
-        }
-
+        body { font-family: Arial, sans-serif; background: var(--bg-body); margin: 0; padding: 0; transition: background 0.3s; }
+        #orcamento-container { width: 210mm; margin: 0 auto; background: var(--bg-card); padding: 15mm 10mm; box-sizing: border-box; border-top: 8px solid var(--azul); transition: background 0.3s; }
+        header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--laranja); padding-bottom: 8px; margin-bottom: 10px; gap: 10px; flex-wrap: wrap; }
+        .titulo-formulario { text-align: center; color: var(--text-heading); text-transform: uppercase; font-weight: bold; font-size: 18px; margin: 10px 0; }
         .logo-area h1 { color: var(--azul); margin: 0; font-size: 20px; }
         .insta-info { color: #E1306C; font-weight: bold; font-size: 13px; }
-
-        .grid-header {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-
-        /* Nova linha para validade e forma de pagamento */
-        .grid-header-2 {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
-        }
-
+        .grid-header { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+        .grid-header-2 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .form-group { display: flex; flex-direction: column; font-size: 11px; }
-        label { font-weight: bold; color: var(--azul); margin-bottom: 2px; }
-        input, select, textarea { padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 11px; }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 10px;
-            table-layout: fixed;
-            margin-bottom: 15px;
-        }
-
-        th { background-color: var(--azul); color: white; padding: 8px 6px; text-align: left; }
-        td { padding: 6px; border-bottom: 1px solid #ddd; word-wrap: break-word; }
-
-        /* Zebrado suave nas linhas */
-        #itens-body tr:nth-child(even) td {
-            background-color: #f5f8ff;
-        }
-        #itens-body tr:nth-child(even) td.un-desc,
-        #itens-body tr:nth-child(even) td.row-total {
-            background-color: #e8eef8;
-        }
-
-        .col-item { width: 35%; }
-        .col-tecido { width: 15%; }
-        .col-qtd { width: 6%; }
-        .col-unit { width: 10%; }
-        .col-desc { width: 6%; }
-        .col-unit-desc { width: 9%; }
-        .col-total { width: 9%; }
-        .col-acoes { width: 10%; }
-
-        .input-item { border: 1px solid #ddd !important; background-color: #fafafa !important; }
+        label { font-weight: bold; color: var(--text-heading); margin-bottom: 2px; }
+        label i { margin-right: 4px; color: var(--laranja); font-size: 12px; }
+        input, select, textarea { padding: 4px; border: 1px solid var(--border); border-radius: 3px; font-size: 11px; background: var(--bg-input); color: var(--text); transition: background 0.2s; }
+        table { width: 100%; border-collapse: collapse; font-size: 10px; table-layout: fixed; margin-bottom: 10px; }
+        th { background: var(--azul); color: white; padding: 5px 4px; text-align: left; font-size: 9px; }
+        td { padding: 3px 4px; border-bottom: 1px solid var(--border-light); word-wrap: break-word; color: #000 !important; }
+        #itens-body td { color: #000 !important; }
+        #itens-body tr:nth-child(even) td { background: var(--bg-stripe); }
+        #itens-body tr:nth-child(even) td.un-desc, #itens-body tr:nth-child(even) td.row-total { background: var(--bg-stripe2); }
+        .col-item { width: 24%; }
+        .col-tecido { width: 16%; }
+        .col-qtd { width: 7%; }
+        .col-unit { width: 12%; }
+        .col-desc-pct { width: 7%; }
+        .col-desc-fix { width: 9%; }
+        .col-unit-desc { width: 12%; }
+        .col-total { width: 13%; }
+        .input-item { border: 1px solid var(--border-light) !important; background: var(--bg-input) !important; color: #000 !important; }
         .input-item:focus { border-color: var(--laranja) !important; outline: none; }
-
-        /* Inputs numéricos da tabela */
-        input.table-input[type="number"],
-        input.table-input[type="text"] {
-            border: 1px solid #d0d7e3 !important;
-            border-radius: 4px;
-            background-color: #f8faff !important;
-            padding: 3px 5px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        input.table-input[type="number"]:focus,
-        input.table-input[type="text"]:focus {
-            outline: none;
-            border-color: var(--laranja) !important;
-            box-shadow: 0 0 0 2px rgba(255, 133, 27, 0.18);
-            background-color: #fff !important;
-        }
-
-        /* Remove setas dos inputs numéricos */
-        input.table-input[type="number"]::-webkit-inner-spin-button,
-        input.table-input[type="number"]::-webkit-outer-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-        input.table-input[type="number"] {
-            -moz-appearance: textfield;
-        }
-
-        /* Células calculadas */
-        td.un-desc, td.row-total {
-            background-color: #f0f4fb;
-            color: var(--azul);
-            font-weight: bold;
-            font-size: 10px;
-        }
-
+        input.table-input[type="number"], input.table-input[type="text"] { border: 1px solid var(--border) !important; border-radius: 3px; background: var(--bg-input) !important; padding: 2px 4px; transition: border-color 0.2s, box-shadow 0.2s; color: #000 !important; }
+        input.table-input[type="number"]:focus, input.table-input[type="text"]:focus { outline: none; border-color: var(--laranja) !important; box-shadow: 0 0 0 2px rgba(255,133,27,0.18); }
+        input.table-input[type="number"]::-webkit-inner-spin-button, input.table-input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input.table-input[type="number"] { -moz-appearance: textfield; }
+        td.un-desc, td.row-total { background: var(--bg-calc); color: var(--azul) !important; font-weight: bold; font-size: 10px; }
+        .row-acoes { border-bottom: 2px solid var(--border) !important; }
+        .row-acoes td { padding: 2px 4px 6px !important; text-align: right; }
+        .btn-linha { border: none; background: none; cursor: pointer; padding: 3px 8px; border-radius: 3px; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+        .btn-linha:hover { background: rgba(0,0,0,0.06); }
+        html.dark .btn-linha:hover { background: rgba(255,255,255,0.08); }
+        .btn-remover { color: #bbb; }
+        .btn-remover:hover { color: var(--vermelho); }
+        .btn-duplicar { color: #bbb; }
+        .btn-duplicar:hover { color: #2980b9; }
         .observacoes-container { margin-top: 15px; page-break-inside: avoid; }
         .observacoes-container textarea { width: 100%; height: 60px; resize: none; padding: 5px; }
-
         .totais-area { display: flex; justify-content: flex-end; margin-top: 20px; page-break-inside: avoid; }
-        .totais-container { width: 270px; background: #f9f9f9; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .total-row { display: flex; justify-content: space-between; margin: 4px 0; font-weight: bold; font-size: 12px; }
-
-        /* Badge VALOR À PAGAR destacado */
-        .valor-pagar-badge {
-            background: var(--laranja);
-            color: #fff;
-            border-radius: 6px;
-            padding: 8px 10px;
-            margin-top: 8px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-            font-weight: bold;
-            letter-spacing: 0.5px;
-        }
-
-        /* Desconto global */
-        .desc-global-area {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin: 8px 0 4px 0;
-            padding: 6px 8px;
-            background: #fff8f0;
-            border: 1px dashed #ffb86b;
-            border-radius: 5px;
-            font-size: 11px;
-        }
-        .desc-global-area label { color: var(--laranja); margin: 0; font-size: 11px; }
-        .desc-global-area input { width: 60px; padding: 3px 5px; font-size: 11px; border: 1px solid #d0d7e3; border-radius: 4px; }
-        .btn-desc-global {
-            background: var(--laranja);
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            padding: 3px 8px;
-            font-size: 10px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .btn-desc-global:hover { opacity: 0.85; }
-
-        footer { 
-            text-align: center; font-size: 9px; color: #555; border-top: 1px solid #ddd; 
-            padding-top: 15px; margin-top: 30px; page-break-inside: avoid;
-        }
-
+        .totais-container { width: 270px; background: var(--bg-totais); padding: 10px; border: 1px solid var(--border-light); border-radius: 5px; transition: background 0.3s; }
+        .total-row { display: flex; justify-content: space-between; margin: 4px 0; font-weight: bold; font-size: 12px; color: var(--text); }
+        .valor-pagar-badge { background: var(--laranja); color: #fff; border-radius: 6px; padding: 8px 10px; margin-top: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 14px; font-weight: bold; }
+        footer { text-align: center; font-size: 9px; color: #555; border-top: 1px solid var(--border-light); padding-top: 15px; margin-top: 30px; page-break-inside: avoid; }
         .no-print { margin: 20px 0; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-        
-        .btn {
-            padding: 12px 25px;
-            border-radius: 5px;
-            font-weight: bold;
-            cursor: pointer;
+        .btn { padding: 12px 25px; border-radius: 5px; font-weight: bold; cursor: pointer; border: none; display: flex; align-items: center; gap: 8px; color: white; transition: opacity 0.2s, transform 0.1s; }
+        .btn:active { transform: scale(0.97); }
+        .btn-add { background: var(--laranja); padding: 8px 15px; }
+        .tabela-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+        .tabela-titulo { font-size: 12px; font-weight: bold; color: var(--text-heading); display: flex; align-items: center; gap: 6px; }
+        .tabela-titulo i { color: var(--laranja); }
+        .btn-add-inline { background: var(--laranja); color: #fff; border: none; border-radius: 4px; padding: 5px 12px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.2s; }
+        .btn-add-inline:hover { background: #e67300; }
+        .btn-pdf { background: var(--azul); }
+        .btn-limpar { background: #7f8c8d; }
+        .table-input { width: 100%; box-sizing: border-box; border: none; background: transparent; padding: 2px; color: #000; }
+        .select-tecido { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 3px; background: var(--bg-input); color: #000 !important; padding: 2px 20px 2px 4px; font-size: 9px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23001f3f' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 4px center; transition: border-color 0.2s; }
+        html.dark .select-tecido { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%235dade2' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); }
+        .select-tecido:focus { outline: none; border-color: var(--laranja); box-shadow: 0 0 0 2px rgba(255,133,27,0.18); }
+        .btn-loading { position: relative; pointer-events: none; opacity: .7; }
+        .btn-loading::after { content: ""; position: absolute; width: 16px; height: 16px; border: 2.5px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .6s linear infinite; right: 12px; top: 50%; margin-top: -8px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .badge-vencida { display: inline-block; background: var(--vermelho); color: #fff; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 3px; margin-left: 6px; animation: pulse-vencida 1.5s infinite; }
+        .input-validade-vencida { border-color: var(--vermelho) !important; box-shadow: 0 0 0 2px rgba(255,65,54,0.25) !important; }
+        @keyframes pulse-vencida { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .theme-toggle { background: none; border: 2px solid var(--azul); border-radius: 50%; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--azul); transition: all 0.3s; flex-shrink: 0; }
+        .theme-toggle:hover { background: var(--azul); color: #fff; }
+        @media (max-width: 900px) {
+            #orcamento-container { width: 100%; padding: 10px; }
+            .grid-header, .grid-header-2 { grid-template-columns: 1fr; }
+            header { flex-direction: column; gap: 8px; align-items: flex-start; }
+            .tabela-wrapper { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            table { min-width: 750px; }
+            .btn { padding: 14px 20px; font-size: 14px; }
+            .btn-linha { min-width: 40px; min-height: 40px; font-size: 18px; }
+        }
+        @media (max-width: 600px) {
+            .tabela-mobile table, .tabela-mobile thead, .tabela-mobile tbody, .tabela-mobile th, .tabela-mobile td, .tabela-mobile tr { display: block; }
+            .tabela-mobile thead { display: none; }
+            .tabela-mobile tr { border: 1px solid var(--border-light); border-radius: 6px; margin-bottom: 10px; padding: 8px; background: var(--bg-card); }
+            .tabela-mobile td { border: none; padding: 3px 0; font-size: 12px; text-align: left; padding-left: 45%; position: relative; }
+            .tabela-mobile td::before { content: attr(data-label); position: absolute; left: 8px; width: 40%; font-weight: bold; color: var(--laranja); font-size: 11px; }
+            .tabela-mobile td:last-child { padding-left: 8px; text-align: right; }
+        }
+        @media print { .no-print { display: none !important; } .theme-toggle { display: none !important; } .select-tecido { appearance: none !important; background-image: none !important; padding-right: 5px !important; } td { padding: 2px 4px !important; } th { padding: 4px !important; } }
+
+        /* Botao flutuante addRow */
+        .fab-add-row {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--laranja);
+            color: #fff;
             border: none;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: white;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 16px rgba(255,133,27,0.45);
+            z-index: 900;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-
-        .btn-add { background: var(--laranja); padding: 8px 15px; }
-        .btn-pdf { background: var(--azul); }
-        .btn-clear { background: #7f8c8d; }
-        .btn-whats { background: #25D366; }
-
-        .table-input { width: 100%; box-sizing: border-box; border: none; background: transparent; padding: 2px; }
-
-        /* Select de Tecido customizado */
-        .select-tecido {
-            width: 100%;
-            box-sizing: border-box;
-            border: 1px solid #d0d7e3;
-            border-radius: 4px;
-            background-color: #f8faff;
-            color: #333;
-            padding: 3px 22px 3px 5px;
-            font-size: 10px;
-            cursor: pointer;
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23001f3f' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 6px center;
-            transition: border-color 0.2s, box-shadow 0.2s;
+        .fab-add-row:hover { transform: scale(1.1); box-shadow: 0 6px 24px rgba(255,133,27,0.6); }
+        .fab-add-row:active { transform: scale(0.95); }
+        .fab-add-row .fab-tooltip {
+            position: absolute;
+            right: 62px;
+            background: var(--azul);
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 5px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
         }
-        .select-tecido:focus {
-            outline: none;
-            border-color: var(--laranja);
-            box-shadow: 0 0 0 2px rgba(255, 133, 27, 0.18);
-            background-color: #fff;
-        }
-        .select-tecido option[value=""] { color: #aaa; font-style: italic; }
+        .fab-add-row:hover .fab-tooltip { opacity: 1; }
+        @media print { .fab-add-row { display: none !important; } }
 
-        /* Botões de ação da linha */
-        .btn-linha {
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-size: 13px;
-            padding: 2px 4px;
-            border-radius: 3px;
-            transition: background 0.15s;
-        }
-        .btn-linha:hover { background: #eee; }
-        .btn-remover { color: var(--vermelho); }
-        .btn-duplicar { color: #2980b9; }
+        /* Toast notifications */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 2000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast { padding: 12px 20px; border-radius: 8px; color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 4px 16px rgba(0,0,0,0.25); pointer-events: auto; animation: toastIn 0.3s ease, toastOut 0.3s ease 3s forwards; max-width: 350px; word-wrap: break-word; display: flex; align-items: center; gap: 8px; }
+        .toast-sucesso { background: #27ae60; }
+        .toast-erro { background: #e74c3c; }
+        .toast-aviso { background: #f39c12; }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
 
-        @media print {
-            .no-print { display: none !important; }
-            .desc-global-area { display: none !important; }
-            .select-tecido {
-                appearance: none !important;
-                -webkit-appearance: none !important;
-                background-image: none !important;
-                padding-right: 5px !important;
-            }
-            td { padding: 3px 6px !important; }
-        }
+        /* Animacao linha nova */
+        #itens-body tr.linha-nova { animation: fadeInRow 0.35s ease; }
+        @keyframes fadeInRow { from { opacity: 0; background: #fff8e1; } to { opacity: 1; background: transparent; } }
+
+        /* Modal Orcamentos */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: flex-start; padding-top: 40px; }
+        .modal-overlay.ativo { display: flex; }
+        .modal-box { background: var(--bg-card); border-radius: 10px; width: 90%; max-width: 800px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid var(--border-light); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-light); }
+        .modal-header h3 { margin: 0; color: var(--text-heading); font-size: 16px; }
+        .modal-header .btn-fechar { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); padding: 4px 8px; border-radius: 4px; }
+        .modal-header .btn-fechar:hover { background: #eee; }
+        html.dark .modal-header .btn-fechar:hover { background: #2a3a5c; }
+        .modal-filtro { padding: 10px 16px; border-bottom: 1px solid var(--border-light); }
+        .modal-filtro input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 5px; font-size: 13px; background: var(--bg-input); color: var(--text); }
+        .modal-body { flex: 1; overflow-y: auto; padding: 0; }
+        .modal-body table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        .modal-body th { background: var(--azul); color: #fff; padding: 8px 10px; text-align: left; position: sticky; top: 0; z-index: 1; }
+        .modal-body td { padding: 8px 10px; border-bottom: 1px solid var(--border-light); color: var(--text); }
+        .modal-body tr:hover td { background: var(--bg-stripe); }
+        .modal-body .acao-btn { background: none; border: none; cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 3px; margin: 0 2px; }
+        .modal-body .acao-btn:hover { background: #eee; }
+        html.dark .modal-body .acao-btn:hover { background: #2a3a5c; }
+        .acao-carregar { color: #2980b9; }
+        .acao-excluir { color: var(--vermelho); }
+        .modal-vazio { text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px; }
+        .modal-loading { text-align: center; padding: 30px; color: var(--text-muted); }
+        .modal-loading i { animation: spin 1s linear infinite; margin-right: 6px; }
+
+        /* Botao Salvar */
+        .btn-save { background: #27ae60; }
+        .btn-orcamentos { background: #8e44ad; }
+        .badge-editando { display: inline-block; background: #e67e22; color: #fff; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 3px; margin-left: 8px; animation: pulse-vencida 1.5s infinite; }
     </style>
 </head>
 <body>
-
 <div id="orcamento-container">
     <header>
         <div class="logo-area">
             <h1>DUBEM Produtos e Serviços LTDA</h1>
             <div class="insta-info"><i class="fab fa-instagram"></i> loja_dubem</div>
         </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema"><i class="fas fa-moon" id="theme-icon"></i></button>
         <div class="form-group">
-            <label>Data e Hora:</label>
-            <input type="datetime-local" id="data-hora">
+            <label><i class="fas fa-calendar-alt"></i> Data e Hora:</label>
+            <input type="text" id="data-hora" readonly>
         </div>
     </header>
-
     <div class="titulo-formulario">Orçamento de Vendas</div>
-
     <div class="grid-header">
         <div class="form-group">
-            <label>Cliente:</label>
-            <input type="text" id="cliente" placeholder="Nome do Cliente">
+            <label><i class="fas fa-user"></i> Cliente:</label>
+            <input type="text" id="cliente" placeholder="Nome do Cliente" list="lista-clientes" autocomplete="off">
+            <datalist id="lista-clientes"></datalist>
         </div>
         <div class="form-group">
-            <label>Contato:</label>
+            <label><i class="fas fa-phone"></i> Contato:</label>
             <input type="text" id="contato">
         </div>
         <div class="form-group">
-            <label>Atendente:</label>
+            <label><i class="fas fa-headset"></i> Atendente:</label>
             <input type="text" id="atendente">
         </div>
     </div>
-
     <div class="grid-header-2">
         <div class="form-group">
-            <label>Validade do Orçamento:</label>
-            <input type="date" id="validade">
+            <label><i class="fas fa-calendar-check"></i> Validade:</label>
+            <div style="display:flex; align-items:center; gap:6px;">
+                <input type="date" id="validade">
+                <span id="badge-validade"></span>
+            </div>
         </div>
     </div>
-
-    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;" class="no-print">
-        <button class="btn btn-add" onclick="addRow()">+ Inserir Linha</button>
-        <div class="desc-global-area">
-            <label><i class="fas fa-percent"></i> Desc. Global:</label>
-            <input type="number" id="desc-global" value="0" min="0" max="100" placeholder="0">
-            <span style="font-size:10px; color:#888;">%</span>
-            <button class="btn-desc-global" onclick="aplicarDescontoGlobal()">Aplicar</button>
-        </div>
+    <div class="tabela-header no-print">
+        <span class="tabela-titulo"><i class="fas fa-list-ol"></i> Itens do Orçamento</span>
+        <button class="btn-add-inline" onclick="addRowScroll()" title="Inserir linha"><i class="fas fa-plus"></i> Inserir Linha</button>
     </div>
-
-    <table id="itens-table">
-        <thead>
-            <tr>
-                <th class="col-item">Item</th>
-                <th class="col-tecido">Tecido</th>
-                <th class="col-qtd">Qtd</th>
-                <th class="col-unit">Val. Unit</th>
-                <th class="col-desc">Desc%</th>
-                <th class="col-unit-desc">c/ Desc</th>
-                <th class="col-total">Total</th>
-                <th class="no-print col-acoes"></th>
-            </tr>
-        </thead>
-        <tbody id="itens-body"></tbody>
-    </table>
-
+    <div class="tabela-wrapper">
+        <table id="itens-table">
+            <thead>
+                <tr>
+                    <th class="col-item">Item</th>
+                    <th class="col-tecido">Tecido</th>
+                    <th class="col-qtd">Qtd</th>
+                    <th class="col-unit">Val. Unit</th>
+                    <th class="col-desc-pct">Desc%</th>
+                    <th class="col-desc-fix">Desc R$</th>
+                    <th class="col-unit-desc">c/ Desc</th>
+                    <th class="col-total">Total</th>
+                </tr>
+            </thead>
+            <tbody id="itens-body"></tbody>
+        </table>
+    </div>
     <div class="observacoes-container">
-        <label style="font-size: 11px; font-weight: bold; color: var(--azul);">Observações:</label>
-        <textarea id="observacoes" placeholder="Observações adicionais..."></textarea>
+        <label style="font-size:11px; font-weight:bold; color:var(--text-heading);"><i class="fas fa-sticky-note" style="color:var(--laranja); margin-right:4px;"></i> Observa&#231;&#245;es:</label>
+        <textarea id="observacoes" placeholder="Observa&#231;&#245;es adicionais..."></textarea>
     </div>
-
     <div class="totais-area">
         <div class="totais-container">
             <div class="total-row"><span>Subtotal:</span> <span id="res-subtotal">R$ 0,00</span></div>
             <div class="total-row"><span>Desc. Total:</span> <span id="res-desconto">R$ 0,00</span></div>
-            <div class="total-row" style="color: var(--azul);"><span>Total Líquido:</span> <span id="res-total">R$ 0,00</span></div>
-            <div class="form-group" style="margin: 5px 0; border-top: 1px dashed #ccc; padding-top: 5px;">
-                <label>Valor de Entrada:</label>
-                <input type="text" id="valor-entrada" value="R$ 0,00" oninput="formatarMoedaInput(this); calculateTotals()">
+            <div class="total-row" style="color:var(--azul);"><span>Total L&#237;quido:</span> <span id="res-total">R$ 0,00</span></div>
+            <div class="form-group" style="margin:5px 0; border-top:1px dashed #ccc; padding-top:5px;">
+                <label><i class="fas fa-hand-holding-usd"></i> Valor de Entrada:</label>
+                <input type="text" id="valor-entrada" value="R$ 0,00">
             </div>
             <div class="valor-pagar-badge">
-                <span>VALOR À PAGAR</span>
+                <span>VALOR &#192; PAGAR</span>
                 <span id="res-a-pagar">R$ 0,00</span>
             </div>
         </div>
     </div>
-
     <footer>
         <strong>DUBEM PRODUTOS PERSONALIZADOS - CNPJ: 189.178.840/0001-89</strong><br>
-        RUA DOM AURELIANO MATOS 1897, CENTRO - ITAPAJÉ (CE)<br>
+        RUA DOM AURELIANO MATOS 1897, CENTRO - ITAPAJ&#201; (CE)<br>
         (85) 9.9280-4012 / dubemprodutoseservicos@gmail.com
     </footer>
 </div>
-
 <div class="no-print">
-    <button class="btn btn-pdf" onclick="generatePDF()"><i class="fas fa-file-pdf"></i> SALVAR PDF</button>
-    <button class="btn btn-whats" onclick="enviarWhatsApp()"><i class="fab fa-whatsapp"></i> ENVIAR WHATSAPP</button>
-    <button class="btn btn-clear" onclick="novoOrcamento()"><i class="fas fa-sync-alt"></i> NOVO ORÇAMENTO</button>
+    <button class="btn btn-save" id="btn-salvar" onclick="salvarOrcamento()"><i class="fas fa-cloud-upload-alt"></i> SALVAR</button>
+    <button class="btn btn-orcamentos" onclick="abrirModalOrcamentos()"><i class="fas fa-list"></i> MEUS ORCAMENTOS</button>
+    <button class="btn btn-pdf" id="btn-pdf" onclick="generatePDF()"><i class="fas fa-file-pdf"></i> SALVAR PDF</button>
+    <button class="btn btn-limpar" onclick="novoOrcamentoSilencioso()"><i class="fas fa-eraser"></i> LIMPAR</button>
 </div>
 
-<script>
-    const tecidos = ["Algodão", "Cacharrel Kanxa", "Cotton", "Dry Elastano", "Dry Falcom", "Dry Kanxa", "Dry Sport", "Helanca Colegial", "Helanquinha Lite", "Moletom", "Piquê", "PP Caiman", "PP Aquarela", "PP Cor", "PP Elastano", "Tactel Cor", "Tactel Branco", "DTF", "Outros"];
+<!-- Modal Meus Orcamentos -->
+<div class="modal-overlay" id="modal-orcamentos">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3><i class="fas fa-list" style="margin-right:6px; color:var(--laranja);"></i> Meus Or&#231;amentos</h3>
+            <button class="btn-fechar" onclick="fecharModalOrcamentos()">&times;</button>
+        </div>
+        <div class="modal-filtro">
+            <input type="text" id="filtro-orcamentos" placeholder="Buscar por cliente..." oninput="filtrarOrcamentos()">
+        </div>
+        <div class="modal-body" id="lista-orcamentos-body">
+            <div class="modal-loading"><i class="fas fa-spinner"></i> Carregando...</div>
+        </div>
+    </div>
+</div>
 
-    // ── Número do orçamento automático ──
-    function gerarNumeroOrcamento() {
-        let seq = parseInt(localStorage.getItem('dubem_orc_seq') || '0') + 1;
-        localStorage.setItem('dubem_orc_seq', seq);
-        const num = String(seq).padStart(3, '0');
-        const ano = new Date().getFullYear();
-        document.getElementById('numero-orcamento').textContent = `#ORC-${ano}-${num}`;
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Botao flutuante addRow -->
+<button class="fab-add-row no-print" onclick="addRowScroll()" title="Inserir linha">
+    <i class="fas fa-plus"></i>
+    <span class="fab-tooltip">Inserir linha</span>
+</button>
+
+<script>
+    function escaparHtml(str) {
+        if (str == null) return '';
+        return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/\//g,'&#47;');
+    }
+    var DOM = {};
+    function $(id) { if (!DOM[id]) DOM[id] = document.getElementById(id); return DOM[id]; }
+
+    // TOAST
+    var _toastContainer = null;
+    function toast(mensagem, tipo) {
+        tipo = tipo || 'sucesso';
+        if (!_toastContainer) _toastContainer = $('toast-container');
+        var el = document.createElement('div');
+        el.className = 'toast toast-' + tipo;
+        var icone = tipo === 'sucesso' ? '\u2705' : tipo === 'erro' ? '\u274c' : '\u26a0\ufe0f';
+        el.innerHTML = '<span>' + icone + '</span><span>' + mensagem + '</span>';
+        _toastContainer.appendChild(el);
+        setTimeout(function() { if (el.parentNode) el.remove(); }, 3500);
     }
 
+    var _temAlteracoes = false;
+    function marcarAlterado() { _temAlteracoes = true; }
+    function marcarSalvo() { _temAlteracoes = false; }
+
+    const tecidos = ["Algod\u00e3o","Cacharrel Kanxa","Cotton","Dry Elastano","Dry Falcom","Dry Kanxa","Dry Sport","Helanca Colegial","Helanquinha Lite","Moletom","Piqu\u00ea","PP Caiman","PP Aquarela","PP Cor","PP Elastano","Tactel Cor","Tactel Branco","DTF","Outros"];
+
     function formatarMoedaInput(input) {
-        let valor = input.value.replace(/\D/g, "");
+        var valor = input.value.replace(/\D/g, "");
         valor = (valor / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         input.value = valor;
     }
-
-    function converterParaNumero(stringMoeda) {
-        if (!stringMoeda) return 0;
-        return parseFloat(stringMoeda.replace("R$", "").replace(/\./g, "").replace(",", ".")) || 0;
+    function converterParaNumero(str) {
+        if (!str) return 0;
+        return parseFloat(str.replace("R$","").replace(/\./g,"").replace(",",".")) || 0;
     }
 
-    function addRow(itemVal, tecidoVal, qtdVal, valUnVal, descVal) {
-        const tbody = document.getElementById('itens-body');
-        const row = tbody.insertRow();
-        let options = `<option value="" disabled selected>Selecione...</option>` + tecidos.map(t => `<option value="${t}">${t}</option>`).join('');
-        row.innerHTML = `
-            <td><input type="text" class="table-input input-item" placeholder="Digite o item..." value="${itemVal || ''}"></td>
-            <td><select class="table-input select-tecido">${options}</select></td>
-            <td><input type="number" class="table-input qtd" value="${qtdVal || 1}" oninput="calculateRow(this)"></td>
-            <td><input type="text" class="table-input val-un" value="${valUnVal || 'R$ 0,00'}" oninput="formatarMoedaInput(this); calculateRow(this)"></td>
-            <td><input type="number" class="table-input desc" value="${descVal || 0}" oninput="calculateRow(this)"></td>
-            <td class="un-desc">R$ 0,00</td>
-            <td class="row-total">R$ 0,00</td>
-            <td class="no-print" style="text-align:center; white-space:nowrap;">
-                <button class="btn-linha btn-duplicar" title="Duplicar linha" onclick="duplicarRow(this)"><i class="fas fa-copy"></i></button>
-                <button class="btn-linha btn-remover" title="Remover linha" onclick="this.closest('tr').remove(); calculateTotals();"><i class="fas fa-times"></i></button>
-            </td>
-        `;
-        // Pré-seleciona o tecido se fornecido
-        if (tecidoVal) {
-            const sel = row.querySelector('.select-tecido');
-            for (let opt of sel.options) { if (opt.value === tecidoVal) { opt.selected = true; break; } }
+    function formatarDataBr(valor) {
+        if (!valor) return '-';
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(valor)) return valor;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+            var p = valor.split('-');
+            return p[2] + '/' + p[1] + '/' + p[0];
         }
-        // Recalcula se veio com valores
+        try {
+            var d = new Date(valor);
+            if (!isNaN(d.getTime())) {
+                var dd = String(d.getDate()).padStart(2, '0');
+                var mm = String(d.getMonth() + 1).padStart(2, '0');
+                var yyyy = d.getFullYear();
+                return dd + '/' + mm + '/' + yyyy;
+            }
+        } catch(e) {}
+        return String(valor).substring(0, 10);
+    }
+
+    function paraInputDate(valor) {
+        if (!valor) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(valor)) return valor;
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(valor)) {
+            var p = valor.split('/');
+            return p[2] + '-' + p[1] + '-' + p[0];
+        }
+        try {
+            var d = new Date(valor);
+            if (!isNaN(d.getTime())) {
+                var dd = String(d.getDate()).padStart(2, '0');
+                var mm = String(d.getMonth() + 1).padStart(2, '0');
+                var yyyy = d.getFullYear();
+                return yyyy + '-' + mm + '-' + dd;
+            }
+        } catch(e) {}
+        return '';
+    }
+
+    function contarItensJson(itensRaw) {
+        try {
+            var arr = typeof itensRaw === 'string' ? JSON.parse(itensRaw) : itensRaw;
+            return Array.isArray(arr) ? arr.length : 0;
+        } catch(e) { return 0; }
+    }
+
+    function extrairNomesItens(itensRaw, maxCaracteres) {
+        maxCaracteres = maxCaracteres || 35;
+        try {
+            var arr = typeof itensRaw === 'string' ? JSON.parse(itensRaw) : itensRaw;
+            if (!Array.isArray(arr) || arr.length === 0) return '';
+            var nomes = [];
+            var total = 0;
+            for (var i = 0; i < arr.length; i++) {
+                var nome = (arr[i].item || '').trim();
+                if (!nome) continue;
+                if (total + nome.length > maxCaracteres && nomes.length > 0) {
+                    nomes.push('...');
+                    break;
+                }
+                nomes.push(nome);
+                total += nome.length;
+            }
+            return nomes.join(', ');
+        } catch(e) { return ''; }
+    }
+
+    function toggleTheme() {
+        document.documentElement.classList.toggle('dark');
+        var icon = $('theme-icon');
+        if (document.documentElement.classList.contains('dark')) {
+            icon.className = 'fas fa-sun';
+            try { localStorage.setItem('dubem_orc_theme', 'dark'); } catch(e) {}
+        } else {
+            icon.className = 'fas fa-moon';
+            try { localStorage.setItem('dubem_orc_theme', 'light'); } catch(e) {}
+        }
+    }
+
+    function carregarClientes() {
+        try {
+            var raw = localStorage.getItem('dubem_orc_clientes');
+            if (!raw) return [];
+            var arr = JSON.parse(raw);
+            return Array.isArray(arr) ? arr : [];
+        } catch(e) { return []; }
+    }
+    function salvarCliente(nome) {
+        if (!nome || nome.length < 2) return;
+        var clientes = carregarClientes();
+        if (!clientes.some(function(c) { return c.toLowerCase() === nome.toLowerCase(); })) {
+            clientes.push(nome);
+            try { localStorage.setItem('dubem_orc_clientes', JSON.stringify(clientes)); } catch(e) {}
+        }
+    }
+    function popularDatalistClientes() {
+        var dl = $('lista-clientes');
+        if (!dl) return;
+        dl.innerHTML = '';
+        carregarClientes().forEach(function(c) {
+            var opt = document.createElement('option');
+            opt.value = c;
+            dl.appendChild(opt);
+        });
+    }
+
+    function checarValidade() {
+        var val = $('validade') ? $('validade').value : '';
+        var badge = $('badge-validade');
+        if (!val || !badge) { if(badge) badge.innerHTML = ''; return; }
+        var hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        var partes = val.split('-');
+        var dataVal = new Date(parseInt(partes[0]), parseInt(partes[1])-1, parseInt(partes[2]));
+        var diff = Math.ceil((dataVal - hoje) / (1000*60*60*24));
+        if (diff < 0) {
+            badge.innerHTML = '<span class="badge-vencida">VENCIDO</span>';
+            $('validade').classList.add('input-validade-vencida');
+        } else if (diff === 0) {
+            badge.innerHTML = '<span class="badge-vencida" style="background:#e67e22;">VENCE HOJE</span>';
+            $('validade').classList.remove('input-validade-vencida');
+        } else if (diff <= 3) {
+            badge.innerHTML = '<span style="font-size:9px; color:#e67e22; font-weight:bold;">Vence em ' + diff + ' dia(s)</span>';
+            $('validade').classList.remove('input-validade-vencida');
+        } else {
+            badge.innerHTML = '<span style="font-size:9px; color:#888;">V\u00e1lido por ' + diff + ' dia(s)</span>';
+            $('validade').classList.remove('input-validade-vencida');
+        }
+    }
+
+    function addRow(itemVal, tecidoVal, qtdVal, valUnVal, descPctVal, descFixVal, semAnimacao) {
+        var tbody = $('itens-body');
+        var row = tbody.insertRow();
+        if (!semAnimacao) row.className = 'linha-nova';
+        row.className += ' row-dados';
+        var options = '<option value="" disabled selected>Selecione...</option>' + tecidos.map(function(t) { return '<option value="' + escaparHtml(t) + '">' + escaparHtml(t) + '</option>'; }).join('');
+        var qtd = (parseInt(qtdVal, 10) || 1);
+        row.innerHTML =
+            '<td data-label="Item"><input type="text" class="table-input input-item" placeholder="Item..." value="' + escaparHtml(itemVal || '') + '"></td>' +
+            '<td data-label="Tecido"><select class="table-input select-tecido">' + options + '</select></td>' +
+            '<td data-label="Qtd"><input type="number" class="table-input qtd" value="' + qtd + '" min="0"></td>' +
+            '<td data-label="Val. Unit"><input type="text" class="table-input val-un" value="' + escaparHtml(valUnVal || 'R$ 0,00') + '"></td>' +
+            '<td data-label="Desc%"><input type="number" class="table-input desc-pct" value="' + (parseFloat(descPctVal) || 0) + '" min="0" max="100"></td>' +
+            '<td data-label="Desc R$"><input type="number" class="table-input desc-fix" value="' + (parseFloat(descFixVal) || 0) + '" min="0"></td>' +
+            '<td class="un-desc">R$ 0,00</td>' +
+            '<td class="row-total">R$ 0,00</td>';
+
+        var rowAcoes = tbody.insertRow();
+        rowAcoes.className = 'row-acoes no-print';
+        rowAcoes.innerHTML = '<td colspan="8">' +
+            '<button class="btn-linha btn-duplicar" title="Duplicar linha"><i class="fas fa-clone"></i></button>' +
+            '<button class="btn-linha btn-remover" title="Remover linha"><i class="fas fa-trash-alt"></i></button>' +
+            '</td>';
+
+        row.addEventListener('input', function(e) {
+            marcarAlterado();
+            if (e.target.classList.contains('val-un')) {
+                formatarMoedaInput(e.target);
+            }
+            if (e.target.classList.contains('qtd') || e.target.classList.contains('val-un') || e.target.classList.contains('desc-pct') || e.target.classList.contains('desc-fix')) {
+                calcularLinhaComDebounce(e.target);
+            }
+        });
+        row.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.target.classList.contains('desc-fix')) {
+                e.preventDefault();
+                addRowScroll();
+            }
+        });
+        rowAcoes.querySelector('.btn-remover').addEventListener('click', function() { row.remove(); rowAcoes.remove(); calculateTotals(); marcarAlterado(); });
+        rowAcoes.querySelector('.btn-duplicar').addEventListener('click', function() { duplicarRow(this); });
+        if (tecidoVal) {
+            var sel = row.querySelector('.select-tecido');
+            for (var i = 0; i < sel.options.length; i++) { if (sel.options[i].value === tecidoVal) { sel.options[i].selected = true; break; } }
+        }
         if (valUnVal) calculateRow(row.querySelector('.qtd'));
     }
 
+    function addRowScroll() {
+        addRow();
+        var tbody = $('itens-body');
+        var lastInput = tbody.querySelector('tr:last-of-type .input-item');
+        if (!lastInput) {
+            var rows = tbody.querySelectorAll('tr');
+            for (var i = rows.length - 1; i >= 0; i--) {
+                lastInput = rows[i].querySelector('.input-item');
+                if (lastInput) break;
+            }
+        }
+        if (lastInput) {
+            lastInput.closest('tr').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(function() { lastInput.focus(); }, 300);
+        }
+    }
+
     function duplicarRow(btn) {
-        const row = btn.closest('tr');
-        const item  = row.querySelector('.input-item').value;
-        const tecido = row.querySelector('.select-tecido').value;
-        const qtd   = row.querySelector('.qtd').value;
-        const valUn = row.querySelector('.val-un').value;
-        const desc  = row.querySelector('.desc').value;
-        addRow(item, tecido, qtd, valUn, desc);
+        var acoesRow = btn.closest('tr');
+        var row = acoesRow.previousElementSibling;
+        if (!row || !row.querySelector('.input-item')) return;
+        addRow(
+            row.querySelector('.input-item').value,
+            row.querySelector('.select-tecido').value,
+            row.querySelector('.qtd').value,
+            row.querySelector('.val-un').value,
+            row.querySelector('.desc-pct').value,
+            row.querySelector('.desc-fix').value
+        );
+    }
+
+    var _debounceTimers = {};
+    function calcularLinhaComDebounce(input) {
+        var key = 'linha_' + (input.closest('tr').rowIndex || 0);
+        clearTimeout(_debounceTimers[key]);
+        _debounceTimers[key] = setTimeout(function() { calculateRow(input); }, 150);
     }
 
     function calculateRow(input) {
-        const row = input.closest('tr');
-        const qtd = parseFloat(row.querySelector('.qtd').value) || 0;
-        const valUn = converterParaNumero(row.querySelector('.val-un').value);
-        const descPorcent = parseFloat(row.querySelector('.desc').value) || 0;
-        const unitComDesc = valUn - (valUn * (descPorcent / 100));
-        const totalLinha = unitComDesc * qtd;
-        row.querySelector('.un-desc').innerText = unitComDesc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        var row = input.closest('tr');
+        var qtd = parseFloat(row.querySelector('.qtd').value) || 0;
+        var valUn = converterParaNumero(row.querySelector('.val-un').value);
+        var descPct = parseFloat(row.querySelector('.desc-pct').value) || 0;
+        var descFix = parseFloat(row.querySelector('.desc-fix').value) || 0;
+        var descPctValor = valUn * (descPct / 100);
+        var unitDesc = valUn - descPctValor - descFix;
+        if (unitDesc < 0) unitDesc = 0;
+        var totalLinha = unitDesc * qtd;
+        row.querySelector('.un-desc').innerText = unitDesc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         row.querySelector('.row-total').innerText = totalLinha.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         row.dataset.subBruto = valUn * qtd;
-        row.dataset.descTotal = (valUn * (descPorcent / 100)) * qtd;
+        row.dataset.descTotal = (descPctValor + descFix) * qtd;
         calculateTotals();
     }
 
     function calculateTotals() {
-        let sub = 0, desc = 0;
-        document.querySelectorAll('#itens-body tr').forEach(r => {
+        var sub = 0, desc = 0;
+        document.querySelectorAll('#itens-body tr').forEach(function(r) {
             sub += parseFloat(r.dataset.subBruto) || 0;
             desc += parseFloat(r.dataset.descTotal) || 0;
         });
-        const totalLiquido = sub - desc;
-        const entrada = converterParaNumero(document.getElementById('valor-entrada').value);
-        document.getElementById('res-subtotal').innerText = sub.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        document.getElementById('res-desconto').innerText = desc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        document.getElementById('res-total').innerText = totalLiquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-        document.getElementById('res-a-pagar').innerText = (totalLiquido - entrada).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        var totalLiquido = sub - desc;
+        var entrada = converterParaNumero($('valor-entrada').value);
+        $('res-subtotal').innerText = sub.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        $('res-desconto').innerText = desc.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        $('res-total').innerText = totalLiquido.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        $('res-a-pagar').innerText = (totalLiquido - entrada).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     }
 
-    function aplicarDescontoGlobal() {
-        const pct = parseFloat(document.getElementById('desc-global').value) || 0;
-        document.querySelectorAll('#itens-body tr').forEach(row => {
-            const descInput = row.querySelector('.desc');
-            if (descInput) {
-                descInput.value = pct;
-                calculateRow(descInput);
+    var gerandoPdf = false;
+    function generatePDF() {
+        if (gerandoPdf) return;
+        var itens = document.querySelectorAll('#itens-body tr.row-dados');
+        if (itens.length === 0) { toast('Adicione pelo menos um item antes de gerar o PDF.', 'aviso'); return; }
+        gerandoPdf = true;
+        var btn = $('btn-pdf');
+        if (btn) { btn.classList.add('btn-loading'); btn.disabled = true; }
+
+        var nomeCliente = $('cliente').value.trim();
+        var nomeArquivo = nomeCliente ? 'Orcamento_' + nomeCliente.replace(/[^\w\s-]/g,'') + '.pdf' : 'Orcamento_DUBEM.pdf';
+
+        try {
+            var doc = new jspdf.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            var pagLarg = 210, margem = 15;
+            var largUtil = pagLarg - margem * 2;
+            var y = margem;
+
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor(0, 31, 63);
+            doc.text('ORCAMENTO DE VENDAS', pagLarg / 2, y, { align: 'center' });
+            y += 8;
+
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(80, 80, 80);
+            doc.text('DUBEM Produtos e Servicos LTDA', margem, y);
+            doc.text('@ loja_dubem', margem + 55, y);
+            y += 5;
+
+            doc.setDrawColor(255, 133, 27);
+            doc.setLineWidth(0.5);
+            doc.line(margem, y, pagLarg - margem, y);
+            y += 7;
+
+            var dados = [
+                ['Cliente:', $('cliente').value || '\u2014'],
+                ['Contato:', $('contato').value || '\u2014'],
+                ['Atendente:', $('atendente').value || '\u2014'],
+                ['Validade:', $('validade').value || '\u2014']
+            ];
+            dados.forEach(function(d) {
+                doc.setFont('Helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.setTextColor(0, 31, 63);
+                doc.text(d[0], margem, y);
+                doc.setFont('Helvetica', 'normal');
+                doc.setTextColor(0, 0, 0);
+                doc.text(d[1], margem + 25, y);
+                y += 5;
+            });
+            y += 2;
+
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(10);
+            doc.setTextColor(0, 31, 63);
+            doc.text('ITENS DO ORCAMENTO', margem, y);
+            y += 6;
+
+            var colW = [48, 25, 8, 22, 12, 16, 22, 27];
+            var headers = ['Item', 'Tecido', 'Qtd', 'Val.Unit', 'Desc%', 'Desc R$', 'c/ Desc', 'Total'];
+
+            doc.setFillColor(0, 31, 63);
+            doc.rect(margem, y - 4, largUtil, 7, 'F');
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(7);
+            doc.setTextColor(255, 255, 255);
+            var x = margem;
+            headers.forEach(function(h, i) {
+                doc.text(h, x + 1, y);
+                x += colW[i];
+            });
+            y += 6;
+
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(8);
+
+            itens.forEach(function(row, idx) {
+                if (y > 260) { doc.addPage(); y = margem; }
+
+                var inpItem = row.querySelector('.input-item');
+                var itemVal = inpItem ? (inpItem.value || '\u2014') : '\u2014';
+                var selTecido = row.querySelector('.select-tecido');
+                var tecidoVal = (selTecido && selTecido.selectedIndex > 0) ? selTecido.options[selTecido.selectedIndex].text : '\u2014';
+                var inpQtd = row.querySelector('.qtd');
+                var qtdVal = inpQtd ? (inpQtd.value || '0') : '0';
+                var inpValUn = row.querySelector('.val-un');
+                var valUnVal = inpValUn ? (inpValUn.value || 'R$ 0,00') : 'R$ 0,00';
+                var inpDescPct = row.querySelector('.desc-pct');
+                var descPctVal = inpDescPct ? (inpDescPct.value || '0') : '0';
+                var inpDescFix = row.querySelector('.desc-fix');
+                var descFixVal = inpDescFix ? (inpDescFix.value || '0') : '0';
+                var tdUnDesc = row.querySelector('.un-desc');
+                var unDescVal = tdUnDesc ? tdUnDesc.textContent : 'R$ 0,00';
+                var tdTotal = row.querySelector('.row-total');
+                var totalVal = tdTotal ? tdTotal.textContent : 'R$ 0,00';
+
+                var vals = [itemVal, tecidoVal, qtdVal, valUnVal, descPctVal, descFixVal, unDescVal, totalVal];
+
+                if (idx % 2 === 1) { doc.setFillColor(240, 244, 251); doc.rect(margem, y - 4, largUtil, 7, 'F'); }
+
+                doc.setTextColor(0, 0, 0);
+                doc.setFont('Helvetica', 'normal');
+                x = margem;
+                vals.forEach(function(v, i) {
+                    doc.text(String(v).substring(0, 22), x + 1, y);
+                    x += colW[i];
+                });
+                y += 7;
+            });
+
+            y += 3;
+            doc.setDrawColor(200, 200, 200);
+            doc.line(margem, y, pagLarg - margem, y);
+            y += 5;
+
+            var obs = $('observacoes').value;
+            if (obs) {
+                doc.setFont('Helvetica', 'bold');
+                doc.setFontSize(9);
+                doc.setTextColor(0, 31, 63);
+                doc.text('Observacoes:', margem, y);
+                y += 5;
+                doc.setFont('Helvetica', 'normal');
+                doc.setTextColor(0, 0, 0);
+                var linhasObs = doc.splitTextToSize(obs, largUtil);
+                doc.text(linhasObs, margem, y);
+                y += linhasObs.length * 4 + 3;
+            }
+
+            var xTot = pagLarg - margem - 70;
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.text('Subtotal:', xTot, y);
+            doc.text($('res-subtotal').innerText, pagLarg - margem, y, { align: 'right' });
+            y += 5;
+            doc.text('Desc. Total:', xTot, y);
+            doc.text($('res-desconto').innerText, pagLarg - margem, y, { align: 'right' });
+            y += 5;
+            doc.setFont('Helvetica', 'bold');
+            doc.setTextColor(0, 31, 63);
+            doc.text('Total Liquido:', xTot, y);
+            doc.text($('res-total').innerText, pagLarg - margem, y, { align: 'right' });
+            y += 5;
+            doc.setFont('Helvetica', 'normal');
+            doc.setTextColor(0, 0, 0);
+            doc.text('Valor Entrada:', xTot, y);
+            doc.text($('valor-entrada').value || 'R$ 0,00', pagLarg - margem, y, { align: 'right' });
+            y += 7;
+
+            var largBadge = 70;
+            doc.setFillColor(255, 133, 27);
+            doc.roundedRect(pagLarg - margem - largBadge, y - 4, largBadge, 9, 1.5, 1.5, 'F');
+            doc.setFont('Helvetica', 'bold');
+            doc.setFontSize(11);
+            doc.setTextColor(255, 255, 255);
+            doc.text('VALOR A PAGAR', pagLarg - margem - largBadge + 3, y + 1.5);
+            doc.text($('res-a-pagar').innerText, pagLarg - margem - 3, y + 1.5, { align: 'right' });
+
+            y += 15;
+            doc.setFont('Helvetica', 'normal');
+            doc.setFontSize(8);
+            doc.setTextColor(120, 120, 120);
+            doc.text('DUBEM Produtos e Servicos LTDA | @loja_dubem', pagLarg / 2, y, { align: 'center' });
+
+            doc.save(nomeArquivo);
+            toast('PDF gerado com sucesso!');
+        } catch(e) {
+            toast('Erro ao gerar PDF: ' + e.message, 'erro');
+        }
+        gerandoPdf = false;
+        if (btn) { btn.classList.remove('btn-loading'); btn.disabled = false; }
+    }
+
+    function coletarDados() {
+        var dados = {
+            cliente: $('cliente').value, contato: $('contato').value,
+            atendente: $('atendente').value, observacoes: $('observacoes').value,
+            valorEntrada: $('valor-entrada').value, validade: $('validade').value,
+            itens: []
+        };
+        document.querySelectorAll('#itens-body tr').forEach(function(row) {
+            dados.itens.push({
+                item: row.querySelector('.input-item') ? row.querySelector('.input-item').value : '',
+                tecido: row.querySelector('.select-tecido') ? row.querySelector('.select-tecido').value : '',
+                qtd: row.querySelector('.qtd') ? row.querySelector('.qtd').value : '',
+                valUn: row.querySelector('.val-un') ? row.querySelector('.val-un').value : '',
+                descPct: row.querySelector('.desc-pct') ? row.querySelector('.desc-pct').value : '',
+                descFix: row.querySelector('.desc-fix') ? row.querySelector('.desc-fix').value : ''
+            });
+        });
+        return dados;
+    }
+
+    function novoOrcamentoSilencioso() {
+        $('cliente').value = "";
+        $('contato').value = "";
+        $('atendente').value = "";
+        $('observacoes').value = "";
+        $('valor-entrada').value = "R$ 0,00";
+        $('validade').value = "";
+        $('itens-body').innerHTML = "";
+        _orcamentoLinhaEdicao = null;
+        var badge = $('badge-editando');
+        if (badge) badge.remove();
+        addRow();
+        calculateTotals();
+        checarValidade();
+        var agora = new Date();
+        var dd = String(agora.getDate()).padStart(2, '0');
+        var mm = String(agora.getMonth() + 1).padStart(2, '0');
+        var yyyy = agora.getFullYear();
+        var hh = String(agora.getHours()).padStart(2, '0');
+        var mi = String(agora.getMinutes()).padStart(2, '0');
+        $('data-hora').value = dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + mi;
+        window.scrollTo(0, 0);
+    }
+
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // API â€” URL E VARIAVEIS
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxl7PIyzFfQHQxQg9yuBygMlkUC-ogswkJfP6odrTV5K6YcY6CnfdJLznWsGM6cQDWS/exec';
+    var _orcamentoLinhaEdicao = null;
+    var _orcamentosCache = [];
+
+    function buscarApi(url, opts) {
+        return fetch(url, opts).then(function(r) {
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.json();
+        });
+    }
+
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // COLETAR DADOS DO FORMULARIO
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    function coletarDadosFormulario() {
+        var itens = [];
+        document.querySelectorAll('#itens-body tr').forEach(function(row) {
+            var item = row.querySelector('.input-item') ? row.querySelector('.input-item').value : '';
+            if (item) {
+                itens.push({
+                    item: item,
+                    tecido: row.querySelector('.select-tecido') ? row.querySelector('.select-tecido').value : '',
+                    qtd: row.querySelector('.qtd') ? row.querySelector('.qtd').value : '0',
+                    valUn: row.querySelector('.val-un') ? row.querySelector('.val-un').value : 'R$ 0,00',
+                    descPct: row.querySelector('.desc-pct') ? row.querySelector('.desc-pct').value : '0',
+                    descFix: row.querySelector('.desc-fix') ? row.querySelector('.desc-fix').value : '0'
+                });
             }
         });
-    }
-
-    function generatePDF() {
-        const element = document.getElementById('orcamento-container');
-        const nomeCliente = document.getElementById('cliente').value.trim();
-        const nomeArquivo = nomeCliente ? `Orcamento_${nomeCliente}.pdf` : 'Orcamento_DUBEM.pdf';
-
-        // Remove seta e condensa espaçamento para o PDF
-        document.querySelectorAll('.select-tecido').forEach(s => {
-            s.style.backgroundImage = 'none';
-            s.style.paddingRight = '4px';
-        });
-        document.querySelectorAll('#itens-body td').forEach(td => {
-            td.style.paddingTop = '3px';
-            td.style.paddingBottom = '3px';
-        });
-
-        const opt = {
-            margin: [10, 5, 10, 5],
-            filename: nomeArquivo,
-            image: { type: 'jpeg', quality: 0.98 },
-            html2canvas: { scale: 2, useCORS: true, scrollY: 0, windowHeight: element.scrollHeight },
-            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-            pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        var sub = converterParaNumero($('res-subtotal').innerText);
+        var desc = converterParaNumero($('res-desconto').innerText);
+        var total = converterParaNumero($('res-total').innerText);
+        var entrada = converterParaNumero($('valor-entrada').value);
+        var agora = new Date();
+        var dd = String(agora.getDate()).padStart(2, '0');
+        var mm = String(agora.getMonth() + 1).padStart(2, '0');
+        var yyyy = agora.getFullYear();
+        return {
+            data: dd + '/' + mm + '/' + yyyy,
+            cliente: $('cliente').value.trim(),
+            contato: $('contato').value.trim(),
+            atendente: $('atendente').value.trim(),
+            validade: $('validade').value,
+            itens: itens,
+            subtotal: sub,
+            desconto: desc,
+            total: total,
+            entrada: entrada,
+            aPagar: total - entrada,
+            observacoes: $('observacoes').value.trim()
         };
-        html2pdf().set(opt).from(element).save().then(() => {
-            // Restaura estilos após salvar
-            document.querySelectorAll('.select-tecido').forEach(s => {
-                s.style.backgroundImage = '';
-                s.style.paddingRight = '';
-            });
-            document.querySelectorAll('#itens-body td').forEach(td => {
-                td.style.paddingTop = '';
-                td.style.paddingBottom = '';
-            });
+    }
+
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // SALVAR ORCAMENTO (novo ou atualizar)
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    var _salvandoOrcamento = false;
+    function salvarOrcamento() {
+        if (_salvandoOrcamento) return;
+        var dados = coletarDadosFormulario();
+        if (!dados.cliente) { toast('Preencha o nome do cliente.', 'aviso'); $('cliente').focus(); return; }
+        if (dados.itens.length === 0) { toast('Adicione pelo menos um item.', 'aviso'); return; }
+
+        var ehEdicao = _orcamentoLinhaEdicao !== null;
+        var acao = ehEdicao ? 'atualizarOrcamento' : 'salvarOrcamento';
+        var msgConfirm = ehEdicao
+            ? 'Deseja salvar as altera\u00e7\u00f5es neste or\u00e7amento?'
+            : 'Salvar este or\u00e7amento?';
+
+        if (!confirm(msgConfirm)) return;
+
+        _salvandoOrcamento = true;
+        var btn = $('btn-salvar');
+        if (btn) { btn.classList.add('btn-loading'); btn.disabled = true; }
+
+        var payload = { acao: acao, itens: dados.itens };
+        if (ehEdicao) payload.linhaEdicao = _orcamentoLinhaEdicao;
+        Object.keys(dados).forEach(function(k) { if (k !== 'itens') payload[k] = dados[k]; });
+
+        buscarApi(SCRIPT_URL, {
+            method: 'POST',
+            redirect: 'follow',
+            cache: 'no-store',
+            body: JSON.stringify(payload)
+        }).then(function(data) {
+            _salvandoOrcamento = false;
+            if (btn) { btn.classList.remove('btn-loading'); btn.disabled = false; }
+            if (data.status === 'ok') {
+                marcarSalvo();
+                toast(data.mensagem || 'Salvo com sucesso!');
+                if (!ehEdicao) {
+                    novoOrcamentoSilencioso();
+                } else {
+                    _orcamentoLinhaEdicao = data.linha;
+                }
+            } else {
+                toast(data.erro || 'Erro ao salvar.', 'erro');
+            }
+        }).catch(function(err) {
+            _salvandoOrcamento = false;
+            if (btn) { btn.classList.remove('btn-loading'); btn.disabled = false; }
+            toast('Erro de conex\u00e3o: ' + err.message, 'erro');
         });
     }
 
-    function enviarWhatsApp() {
-        const cliente   = document.getElementById('cliente').value.trim() || 'Cliente';
-        const contato   = document.getElementById('contato').value.trim();
-        const validade  = document.getElementById('validade').value;
-        const subtotal  = document.getElementById('res-subtotal').innerText;
-        const desconto  = document.getElementById('res-desconto').innerText;
-        const total     = document.getElementById('res-total').innerText;
-        const aPagar    = document.getElementById('res-a-pagar').innerText;
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // LISTAR ORCAMENTOS (modal)
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    function abrirModalOrcamentos() {
+        $('modal-orcamentos').classList.add('ativo');
+        $('filtro-orcamentos').value = '';
+        $('lista-orcamentos-body').innerHTML = '<div class="modal-loading"><i class="fas fa-spinner"></i> Carregando...</div>';
+        buscarApi(SCRIPT_URL + '?acao=listarOrcamentos&_=' + Date.now(), { cache: 'no-store', redirect: 'follow' })
+            .then(function(data) {
+                _orcamentosCache = data.orcamentos || [];
+                renderizarListaOrcamentos(_orcamentosCache);
+            }).catch(function(err) {
+                $('lista-orcamentos-body').innerHTML = '<div class="modal-vazio">\u274c Erro ao carregar: ' + err.message + '</div>';
+            });
+    }
 
-        // Verifica se há desconto aplicado
-        const descontoNum = parseFloat(desconto.replace("R$", "").replace(/\./g, "").replace(",", ".")) || 0;
+    function fecharModalOrcamentos() {
+        $('modal-orcamentos').classList.remove('ativo');
+    }
 
-        // Monta lista de itens
-        let itens = '';
-        document.querySelectorAll('#itens-body tr').forEach((row, i) => {
-            const item  = row.querySelector('.input-item')?.value || '';
-            const qtd   = row.querySelector('.qtd')?.value || '';
-            const total = row.querySelector('.row-total')?.innerText || '';
-            if (item) itens += `  ${i+1}. ${item} (${qtd}x) → ${total}\n`;
-        });
-
-        let validadeStr = '';
-        if (validade) {
-            const [a, m, d] = validade.split('-');
-            validadeStr = `\n📅 *Validade:* ${d}/${m}/${a}`;
+    function renderizarListaOrcamentos(lista) {
+        var body = $('lista-orcamentos-body');
+        if (!lista || lista.length === 0) {
+            body.innerHTML = '<div class="modal-vazio">Nenhum or\u00e7amento encontrado.</div>';
+            return;
         }
-
-        // Linha de desconto só aparece se houver desconto
-        const descontoStr = descontoNum > 0
-            ? `🏷️ *Subtotal:* ${subtotal}\n🎁 *Desconto:* -${desconto}\n`
-            : '';
-
-        const msg = `Olá, *${cliente}*! 👋\n\nSegue o resumo do seu orçamento DUBEM:\n\n`
-            + `${validadeStr ? validadeStr + '\n\n' : ''}`
-            + `*Itens:*\n${itens}\n`
-            + `${descontoStr}`
-            + `✅ *Valor a Pagar:* ${aPagar}\n\n`
-            + `Qualquer dúvida, estamos à disposição! 😊\n*DUBEM Produtos Personalizados*`;
-
-        const numero = contato.replace(/\D/g, '');
-        const url = numero
-            ? `https://wa.me/55${numero}?text=${encodeURIComponent(msg)}`
-            : `https://wa.me/?text=${encodeURIComponent(msg)}`;
-        window.open(url, '_blank');
+        var html = '<table><thead><tr><th>Data</th><th>Cliente</th><th>Itens</th><th>Validade</th><th>Total</th><th style="text-align:center;">A\u00e7\u00f5es</th></tr></thead><tbody>';
+        lista.forEach(function(o) {
+            var totalFmt = (parseFloat(o.total) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            var dataFmt = formatarDataBr(o.data);
+            var validadeFmt = formatarDataBr(o.validade);
+            var clienteEsc = escaparHtml(o.cliente || 'Sem cliente');
+            var qtdItens = contarItensJson(o.itens);
+            var nomesItens = extrairNomesItens(o.itens);
+            var itensLabel = nomesItens
+                ? '<span style="font-weight:bold;">' + qtdItens + 'x</span> <span style="color:#888; font-size:10px;">' + escaparHtml(nomesItens) + '</span>'
+                : '<span style="font-weight:bold;">' + qtdItens + '</span>';
+            var obs = (o.observacoes || '').substring(0, 30);
+            var obsPreview = obs ? ' <span style="color:#888; font-size:10px;">' + escaparHtml(obs) + (o.observacoes.length > 30 ? '...' : '') + '</span>' : '';
+            html += '<tr data-linha="' + o.linha + '">' +
+                '<td style="white-space:nowrap;">' + dataFmt + '</td>' +
+                '<td><strong>' + clienteEsc + '</strong>' + obsPreview + '</td>' +
+                '<td>' + itensLabel + '</td>' +
+                '<td style="white-space:nowrap;">' + validadeFmt + '</td>' +
+                '<td><strong>' + totalFmt + '</strong></td>' +
+                '<td style="text-align:center; white-space:nowrap;">' +
+                    '<button class="acao-btn acao-carregar" title="Carregar or\u00e7amento" onclick="carregarOrcamento(' + o.linha + ')"><i class="fas fa-folder-open"></i></button>' +
+                    '<button class="acao-btn acao-excluir" title="Excluir" onclick="excluirOrcamento(' + o.linha + ')"><i class="fas fa-trash"></i></button>' +
+                '</td></tr>';
+        });
+        html += '</tbody></table>';
+        body.innerHTML = html;
     }
 
-    function novoOrcamento() {
-        if (confirm("Deseja realmente limpar tudo e começar um novo orçamento?")) {
-            document.getElementById('cliente').value = "";
-            document.getElementById('contato').value = "";
-            document.getElementById('atendente').value = "";
-            document.getElementById('observacoes').value = "";
-            document.getElementById('valor-entrada').value = "R$ 0,00";
-            document.getElementById('validade').value = "";
-            document.getElementById('desc-global').value = "0";
+    function filtrarOrcamentos() {
+        var filtro = ($('filtro-orcamentos').value || '').toLowerCase();
+        if (!filtro) { renderizarListaOrcamentos(_orcamentosCache); return; }
+        var filtrados = _orcamentosCache.filter(function(o) {
+            return (o.cliente || '').toLowerCase().indexOf(filtro) !== -1;
+        });
+        renderizarListaOrcamentos(filtrados);
+    }
 
-            document.getElementById('itens-body').innerHTML = "";
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // CARREGAR ORCAMENTO NO FORMULARIO
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    function carregarOrcamento(linha) {
+        if (!confirm('Carregar este or\u00e7amento no formul\u00e1rio?')) return;
+        buscarApi(SCRIPT_URL + '?acao=buscarOrcamento&linha=' + linha + '&_=' + Date.now(), { cache: 'no-store', redirect: 'follow' })
+            .then(function(data) {
+                if (!data.orcamento) { toast(data.erro || 'Or\u00e7amento n\u00e3o encontrado.', 'erro'); return; }
+                preencherFormulario(data.orcamento);
+                fecharModalOrcamentos();
+                marcarSalvo();
+                toast('Or\u00e7amento carregado!');
+                window.scrollTo(0, 0);
+            }).catch(function(err) {
+                toast('Erro ao carregar: ' + err.message, 'erro');
+            });
+    }
+
+    function preencherFormulario(o) {
+        $('cliente').value = o.cliente || '';
+        $('contato').value = o.contato || '';
+        $('atendente').value = o.atendente || '';
+        $('observacoes').value = o.observacoes || '';
+        $('validade').value = paraInputDate(o.validade);
+        _orcamentoLinhaEdicao = o.linha;
+
+        // Badge editando
+        var badge = $('badge-editando');
+        if (badge) badge.remove();
+        var b = document.createElement('span');
+        b.id = 'badge-editando';
+        b.className = 'badge-editando';
+        b.textContent = 'EDITANDO #' + o.linha;
+        var titulo = document.querySelector('.titulo-formulario');
+        if (titulo) titulo.appendChild(b);
+
+        // Entrada
+        var entradaNum = parseFloat(o.entrada) || 0;
+        $('valor-entrada').value = entradaNum.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        // Itens
+        $('itens-body').innerHTML = '';
+        var itens = [];
+        try { itens = typeof o.itens === 'string' ? JSON.parse(o.itens) : o.itens; } catch(e) { itens = []; }
+        if (itens.length > 0) {
+            itens.forEach(function(item) {
+                addRow(item.item, item.tecido, item.qtd, item.valUn, item.descPct, item.descFix);
+            });
+        } else {
             addRow();
-            calculateTotals();
-
-            const agora = new Date();
-            agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
-            document.getElementById('data-hora').value = agora.toISOString().slice(0, 16);
-
-            window.scrollTo(0, 0);
         }
+        calculateTotals();
+        checarValidade();
+
+        // Resetar data/hora
+        var agora = new Date();
+        var dd = String(agora.getDate()).padStart(2, '0');
+        var mm = String(agora.getMonth() + 1).padStart(2, '0');
+        var yyyy = agora.getFullYear();
+        var hh = String(agora.getHours()).padStart(2, '0');
+        var mi = String(agora.getMinutes()).padStart(2, '0');
+        $('data-hora').value = dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + mi;
     }
 
-    window.onload = () => {
-        addRow();
-        const agora = new Date();
-        agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
-        document.getElementById('data-hora').value = agora.toISOString().slice(0, 16);
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // EXCLUIR ORCAMENTO
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    function excluirOrcamento(linha) {
+        if (!confirm('Tem certeza que deseja excluir este or\u00e7amento?')) return;
+        if (!confirm('Esta a\u00e7\u00e3o \u00e0 irrevers\u00edvel. Confirmar exclus\u00e3o?')) return;
+        buscarApi(SCRIPT_URL, {
+            method: 'POST',
+            redirect: 'follow',
+            cache: 'no-store',
+            body: JSON.stringify({ acao: 'excluirOrcamento', linha: linha })
+        }).then(function(data) {
+            if (data.status === 'ok') {
+                toast('Or\u00e7amento exclu\u00eddo!');
+                abrirModalOrcamentos();
+            } else {
+                toast(data.erro || 'Erro ao excluir.', 'erro');
+            }
+        }).catch(function(err) {
+            toast('Erro de conex\u00e3o: ' + err.message, 'erro');
+        });
+    }
 
-        // Validade padrão: 7 dias
-        const validade = new Date();
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    // FECHAR MODAL COM ESCAPE
+    // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && $('modal-orcamentos') && $('modal-orcamentos').classList.contains('ativo')) {
+            fecharModalOrcamentos();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        ['cliente','contato','atendente','observacoes','valor-entrada','validade','itens-body','data-hora','res-subtotal','res-desconto','res-total','res-a-pagar','btn-pdf','badge-validade','lista-clientes','theme-icon','btn-salvar','modal-orcamentos','filtro-orcamentos','lista-orcamentos-body'].forEach(function(id) { $(id); });
+        try {
+            if (localStorage.getItem('dubem_orc_theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                var ic = $('theme-icon');
+                if (ic) ic.className = 'fas fa-sun';
+            }
+        } catch(e) {}
+        addRow();
+        var agora = new Date();
+        agora.setMinutes(agora.getMinutes() - agora.getTimezoneOffset());
+        var agora = new Date();
+        var dd = String(agora.getDate()).padStart(2, '0');
+        var mm = String(agora.getMonth() + 1).padStart(2, '0');
+        var yyyy = agora.getFullYear();
+        var hh = String(agora.getHours()).padStart(2, '0');
+        var mi = String(agora.getMinutes()).padStart(2, '0');
+        $('data-hora').value = dd + '/' + mm + '/' + yyyy + ' ' + hh + ':' + mi;
+        var validade = new Date();
         validade.setDate(validade.getDate() + 7);
-        document.getElementById('validade').value = validade.toISOString().slice(0, 10);
-    };
+        $('validade').value = validade.toISOString().slice(0, 10);
+        popularDatalistClientes();
+        checarValidade();
+        $('valor-entrada').addEventListener('input', function() { formatarMoedaInput(this); calculateTotals(); marcarAlterado(); });
+        $('validade').addEventListener('change', function() { checarValidade(); marcarAlterado(); });
+        $('cliente').addEventListener('change', function() { salvarCliente(this.value.trim()); popularDatalistClientes(); marcarAlterado(); });
+        $('contato').addEventListener('input', marcarAlterado);
+        $('atendente').addEventListener('input', marcarAlterado);
+        $('observacoes').addEventListener('input', marcarAlterado);
+        window.addEventListener('beforeunload', function(e) {
+            if (_temAlteracoes) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    });
 </script>
 </body>
 </html>
